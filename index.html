@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a1119" />
+    <meta name="description" content="Interactive map of the Apostle Paul's missionary journeys with scripture references, biblical and modern city names." />
+    <title>Paul's Missionary Journeys</title>
+
+    <!-- ArcGIS Maps SDK 5.0 (unified: Core + Calcite + Components) -->
+    <script type="module" src="https://js.arcgis.com/5.0/"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/5.0/esri/themes/dark/main.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body class="calcite-mode-dark">
+    <!-- ==================== SPLASH SCREEN ==================== -->
+    <div id="splash" class="splash">
+      <div class="splash-content">
+        <div class="splash-cross">&#10013;</div>
+        <h1 class="splash-title">The Journeys of Paul</h1>
+        <p class="splash-subtitle">An Interactive Biblical Atlas</p>
+        <div class="splash-verse">
+          "I have fought the good fight, I have finished the race, I have kept the faith."
+          <span class="splash-ref">&mdash; 2 Timothy 4:7</span>
+        </div>
+        <div class="splash-loader">
+          <div class="splash-loader-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MAIN APP ==================== -->
+    <calcite-shell class="app-shell">
+
+      <!-- ===== HEADER ===== -->
+      <calcite-navigation slot="header" class="app-header">
+        <calcite-navigation-logo
+          slot="logo"
+          heading="Paul's Journeys"
+          description="Interactive Biblical Atlas"
+          icon="map"
+        ></calcite-navigation-logo>
+
+        <div slot="content-end" class="header-actions">
+          <calcite-button
+            id="btnScripture"
+            appearance="transparent"
+            icon-start="book"
+            kind="neutral"
+            scale="s"
+            class="header-btn"
+          >Scripture</calcite-button>
+          <calcite-button
+            id="btnToggleNames"
+            appearance="transparent"
+            icon-start="label"
+            kind="neutral"
+            scale="s"
+            class="header-btn"
+          >Names</calcite-button>
+          <calcite-button
+            id="btnInfo"
+            appearance="transparent"
+            icon-start="information"
+            kind="neutral"
+            scale="s"
+            class="header-btn hide-label-mobile"
+          ></calcite-button>
+        </div>
+      </calcite-navigation>
+
+      <!-- ===== JOURNEY SELECTOR CHIPS ===== -->
+      <div id="journeyBar" class="journey-bar">
+        <div class="journey-chips">
+          <button class="journey-chip active" data-journey="all">
+            <span class="chip-dot" style="background:#888"></span>
+            All Journeys
+          </button>
+          <button class="journey-chip" data-journey="1">
+            <span class="chip-dot" style="background:#C9A84C"></span>
+            Journey 1
+          </button>
+          <button class="journey-chip" data-journey="2">
+            <span class="chip-dot" style="background:#8A4F7D"></span>
+            Journey 2
+          </button>
+          <button class="journey-chip" data-journey="3">
+            <span class="chip-dot" style="background:#568259"></span>
+            Journey 3
+          </button>
+          <button class="journey-chip" data-journey="4">
+            <span class="chip-dot" style="background:#A34B4B"></span>
+            To Rome
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== MAP ===== -->
+      <div id="viewDiv"></div>
+
+      <!-- ===== SCRIPTURE FILTER PANEL ===== -->
+      <div id="scripturePanel" class="scripture-panel hidden">
+        <div class="scripture-panel-header">
+          <h3>Filter by Scripture</h3>
+          <calcite-button
+            id="closeScripture"
+            appearance="transparent"
+            icon-start="x"
+            kind="neutral"
+            scale="s"
+          ></calcite-button>
+        </div>
+        <div class="scripture-search">
+          <calcite-input-text
+            id="scriptureSearch"
+            placeholder="Search verse (e.g. Acts 16:9)"
+            icon="search"
+            clearable
+            scale="m"
+          ></calcite-input-text>
+        </div>
+        <div id="chapterList" class="chapter-list"></div>
+      </div>
+
+      <!-- ===== INFO MODAL ===== -->
+      <calcite-modal id="infoModal" scale="m" width-scale="s">
+        <h3 slot="header">About This Map</h3>
+        <div slot="content" class="info-content">
+          <p>This interactive atlas traces the <strong>four missionary journeys of the Apostle Paul</strong> as recorded in the book of Acts.</p>
+          <div class="info-legend">
+            <h4>Journey Legend</h4>
+            <div class="legend-item"><span class="legend-line" style="background:#C9A84C"></span>First Journey (AD 46-48) &mdash; Acts 13-14</div>
+            <div class="legend-item"><span class="legend-line" style="background:#8A4F7D"></span>Second Journey (AD 49-52) &mdash; Acts 15:36-18:22</div>
+            <div class="legend-item"><span class="legend-line" style="background:#568259"></span>Third Journey (AD 53-57) &mdash; Acts 18:23-21:17</div>
+            <div class="legend-item"><span class="legend-line" style="background:#A34B4B"></span>Journey to Rome (AD 59-60) &mdash; Acts 27-28</div>
+          </div>
+          <div class="info-features">
+            <h4>Features</h4>
+            <ul>
+              <li>Tap any city to see biblical events & scripture</li>
+              <li>Use journey chips to filter by trip</li>
+              <li>Toggle biblical/modern city names</li>
+              <li>Filter by scripture chapter or verse</li>
+              <li>See how each city connects to the biblical narrative</li>
+            </ul>
+          </div>
+          <p class="info-verse">"How beautiful are the feet of those who bring good news!" &mdash; Romans 10:15</p>
+        </div>
+      </calcite-modal>
+
+      <!-- ===== BOTTOM SHEET (city details) ===== -->
+      <div id="bottomSheet" class="bottom-sheet">
+        <div class="sheet-handle" id="sheetHandle"><div class="handle-bar"></div></div>
+        <div class="sheet-content" id="sheetContent">
+          <div class="sheet-header">
+            <div class="sheet-city-info">
+              <h2 id="sheetBiblicalName" class="sheet-biblical-name"></h2>
+              <p id="sheetModernName" class="sheet-modern-name"></p>
+            </div>
+            <calcite-button
+              id="closeSheet"
+              appearance="transparent"
+              icon-start="x"
+              kind="neutral"
+              scale="s"
+              round
+            ></calcite-button>
+          </div>
+          <div id="sheetEvents" class="sheet-events"></div>
+        </div>
+      </div>
+
+      <!-- ===== NAME TOGGLE INDICATOR ===== -->
+      <div id="nameToggle" class="name-toggle">
+        <span id="nameLabel">Showing: Biblical Names</span>
+      </div>
+
+    </calcite-shell>
+
+    <!-- App Script -->
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

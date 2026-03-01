@@ -1,0 +1,760 @@
+/* ============================================================
+   Paul's Missionary Journeys — Biblical Theme Styles
+   ============================================================ */
+
+/* ---------- CSS Variables / Theme ---------- */
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8D9A0;
+  --gold-dim: #8B7533;
+  --parchment: #F5E6C8;
+  --parchment-dark: #2A2118;
+  --deep-purple: #1a1119;
+  --panel-bg: #221a20;
+  --card-bg: #2d2329;
+  --card-border: #3d3036;
+  --text-primary: #EDE0D4;
+  --text-secondary: #B8A99A;
+  --text-muted: #7A6D62;
+  --journey-1: #C9A84C;
+  --journey-2: #8A4F7D;
+  --journey-3: #568259;
+  --journey-4: #A34B4B;
+  --font-display: "Cinzel", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --sheet-height: 0px;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background: var(--deep-purple);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- Calcite Overrides ---------- */
+calcite-shell {
+  --calcite-color-brand: var(--gold);
+  --calcite-font-family: var(--font-body);
+}
+
+.app-header {
+  --calcite-color-brand: var(--gold);
+  background: var(--deep-purple) !important;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.app-header calcite-navigation-logo {
+  --calcite-color-text-1: var(--gold);
+  font-family: var(--font-display);
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.header-btn {
+  --calcite-color-text-1: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* ---------- Splash Screen ---------- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #2a1f28 0%, var(--deep-purple) 70%);
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.splash.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-content {
+  text-align: center;
+  padding: 2rem;
+  max-width: 400px;
+}
+
+.splash-cross {
+  font-size: 48px;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(201, 168, 76, 0.4);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(201, 168, 76, 0.3); }
+  50% { text-shadow: 0 0 40px rgba(201, 168, 76, 0.6); }
+}
+
+.splash-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.splash-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+.splash-verse {
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.splash-ref {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--gold-dim);
+  font-style: normal;
+  font-size: 0.8rem;
+}
+
+.splash-loader {
+  width: 200px;
+  height: 3px;
+  background: var(--card-border);
+  border-radius: 3px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.splash-loader-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ---------- Map ---------- */
+#viewDiv {
+  flex: 1;
+  width: 100%;
+  position: relative;
+}
+
+/* Hide ArcGIS default UI elements we don't need */
+.esri-ui-corner .esri-component {
+  box-shadow: none !important;
+}
+
+/* ---------- Journey Selector Bar ---------- */
+.journey-bar {
+  position: absolute;
+  top: 56px; /* below header */
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 8px 12px;
+  pointer-events: none;
+}
+
+.journey-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  pointer-events: auto;
+  padding-bottom: 4px;
+}
+
+.journey-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.journey-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+  background: rgba(34, 26, 32, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.journey-chip:hover {
+  border-color: var(--gold-dim);
+  color: var(--text-primary);
+}
+
+.journey-chip.active {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---------- Scripture Filter Panel ---------- */
+.scripture-panel {
+  position: absolute;
+  top: 56px;
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  max-height: calc(100vh - 56px);
+  background: var(--panel-bg);
+  border-left: 1px solid var(--card-border);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.scripture-panel.hidden {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scripture-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.scripture-panel-header h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.scripture-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.chapter-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.chapter-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chapter-item:hover {
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.chapter-item.active {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--gold);
+}
+
+.chapter-item .chapter-name {
+  font-weight: 500;
+}
+
+.chapter-item .chapter-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--card-bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.verse-sublist {
+  padding-left: 12px;
+  margin-top: 4px;
+}
+
+.verse-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.verse-item:hover {
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--text-primary);
+}
+
+.verse-item .verse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.verse-item .verse-city {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ---------- Bottom Sheet ---------- */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 300;
+  background: var(--panel-bg);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.handle-bar {
+  width: 36px;
+  height: 4px;
+  background: var(--text-muted);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  overscroll-behavior: contain;
+  padding-bottom: calc(20px + var(--safe-bottom));
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--panel-bg);
+  padding-top: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.sheet-biblical-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--gold);
+  line-height: 1.3;
+}
+
+.sheet-modern-name {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sheet-events {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Event Card */
+.event-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 3px solid var(--gold);
+  transition: border-color 0.2s;
+}
+
+.event-card[data-journey="1"] { border-left-color: var(--journey-1); }
+.event-card[data-journey="2"] { border-left-color: var(--journey-2); }
+.event-card[data-journey="3"] { border-left-color: var(--journey-3); }
+.event-card[data-journey="4"] { border-left-color: var(--journey-4); }
+
+.event-journey-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--gold);
+}
+
+.event-card[data-journey="2"] .event-journey-tag {
+  background: rgba(138, 79, 125, 0.15);
+  color: #C48AB7;
+}
+.event-card[data-journey="3"] .event-journey-tag {
+  background: rgba(86, 130, 89, 0.15);
+  color: #7DB882;
+}
+.event-card[data-journey="4"] .event-journey-tag {
+  background: rgba(163, 75, 75, 0.15);
+  color: #D48A8A;
+}
+
+.event-action {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.event-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.event-quote {
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--gold-light);
+  background: rgba(201, 168, 76, 0.06);
+  padding: 12px 14px;
+  border-radius: 8px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  border-left: 2px solid var(--gold-dim);
+}
+
+.event-verse-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.1);
+  padding: 4px 12px;
+  border-radius: 16px;
+  cursor: default;
+}
+
+.event-verse-ref::before {
+  content: "\1F4D6";
+  font-size: 12px;
+}
+
+/* ---------- Name Toggle Indicator ---------- */
+.name-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  background: rgba(34, 26, 32, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.name-toggle.visible {
+  opacity: 1;
+}
+
+.bottom-sheet.open ~ .name-toggle {
+  transform: translateX(-50%) translateY(-100px);
+}
+
+/* ---------- Info Modal ---------- */
+.info-content {
+  line-height: 1.7;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.info-content p {
+  margin-bottom: 1rem;
+}
+
+.info-legend {
+  margin: 1rem 0;
+}
+
+.info-legend h4, .info-features h4 {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 0.82rem;
+}
+
+.legend-line {
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.info-features ul {
+  padding-left: 1.2rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.info-features li {
+  margin-bottom: 0.3rem;
+  font-size: 0.82rem;
+}
+
+.info-verse {
+  font-style: italic;
+  text-align: center;
+  color: var(--gold-dim);
+  font-size: 0.85rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--card-border);
+}
+
+/* ---------- Map Labels (custom styling) ---------- */
+.city-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--parchment);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---------- Responsive ---------- */
+
+/* Tablet+ */
+@media (min-width: 768px) {
+  .bottom-sheet {
+    left: auto;
+    right: 16px;
+    bottom: 16px;
+    width: 400px;
+    max-height: calc(100vh - 120px);
+    border-radius: 16px;
+    transform: translateX(calc(100% + 20px));
+  }
+
+  .bottom-sheet.open {
+    transform: translateX(0);
+  }
+
+  .sheet-handle {
+    display: none;
+  }
+
+  .journey-bar {
+    top: 56px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    padding: 12px;
+  }
+
+  .scripture-panel {
+    width: 360px;
+    border-radius: 0 0 0 12px;
+    top: 56px;
+  }
+
+  .name-toggle {
+    bottom: 24px;
+    left: 24px;
+    transform: none;
+  }
+
+  .bottom-sheet.open ~ .name-toggle {
+    transform: none;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1200px) {
+  .bottom-sheet {
+    width: 440px;
+  }
+}
+
+/* Mobile specific */
+@media (max-width: 767px) {
+  .hide-label-mobile span {
+    display: none;
+  }
+
+  .header-btn {
+    font-size: 0;
+    min-width: 36px;
+  }
+
+  .scripture-panel {
+    width: 100%;
+    max-width: 100vw;
+    top: 56px;
+    border-radius: 0;
+    max-height: 60vh;
+  }
+
+  .journey-bar {
+    padding: 6px 8px;
+  }
+
+  .journey-chip {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+/* Safe area for iPhones with notch */
+@supports (padding: max(0px)) {
+  .bottom-sheet .sheet-content {
+    padding-bottom: max(20px, var(--safe-bottom));
+  }
+
+  .app-header {
+    padding-top: var(--safe-top);
+  }
+}
+
+/* ---------- Scrollbar Styling ---------- */
+.sheet-content::-webkit-scrollbar,
+.chapter-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sheet-content::-webkit-scrollbar-track,
+.chapter-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sheet-content::-webkit-scrollbar-thumb,
+.chapter-list::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 4px;
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.event-card {
+  animation: fadeInUp 0.3s ease forwards;
+  opacity: 0;
+}
+
+.event-card:nth-child(1) { animation-delay: 0.05s; }
+.event-card:nth-child(2) { animation-delay: 0.1s; }
+.event-card:nth-child(3) { animation-delay: 0.15s; }
+.event-card:nth-child(4) { animation-delay: 0.2s; }
+.event-card:nth-child(5) { animation-delay: 0.25s; }
+
+/* Focus visible for accessibility */
+.journey-chip:focus-visible,
+.chapter-item:focus-visible,
+.verse-item:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Prevent text selection on interactive elements */
+.journey-chip,
+.sheet-handle {
+  user-select: none;
+  -webkit-user-select: none;
+}
