@@ -1,7 +1,12 @@
 /**
  * Paul's Missionary Journeys — Main Application
  * ArcGIS Maps SDK for JavaScript 5.0
+ *
+ * CONFIGURATION: To use Esri's premium basemaps, set your API key below.
+ * Get a free key at https://developers.arcgis.com/
+ * Without a key, the app uses CartoDB dark tiles (no key required).
  */
+const ARCGIS_API_KEY = ""; // Paste your key here
 
 import {
   cities,
@@ -9,37 +14,104 @@ import {
   routes,
   scriptureIndex,
   allChapters,
-  allVerses,
 } from "./data.js";
 
 // ============================================================
-// ArcGIS Module Imports
+// Splash helpers (available immediately, before ArcGIS loads)
 // ============================================================
-const [
-  Map,
-  MapView,
-  GraphicsLayer,
-  Graphic,
-  Point,
-  Polyline,
-  SimpleMarkerSymbol,
-  SimpleLineSymbol,
-  TextSymbol,
-  PopupTemplate,
-  reactiveUtils,
-] = await Promise.all([
-  import("https://js.arcgis.com/5.0/@arcgis/core/Map.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/views/MapView.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/layers/GraphicsLayer.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/Graphic.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/geometry/Point.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/geometry/Polyline.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/symbols/SimpleMarkerSymbol.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/symbols/SimpleLineSymbol.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/symbols/TextSymbol.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/PopupTemplate.js").then(m => m.default),
-  import("https://js.arcgis.com/5.0/@arcgis/core/reactiveUtils.js"),
-]);
+const splash = document.getElementById("splash");
+const loaderBar = document.querySelector(".splash-loader-bar");
+
+let progress = 0;
+const progressInterval = setInterval(() => {
+  progress += Math.random() * 12;
+  if (progress > 90) progress = 90;
+  loaderBar.style.width = progress + "%";
+}, 250);
+
+function dismissSplash() {
+  clearInterval(progressInterval);
+  loaderBar.style.width = "100%";
+  setTimeout(() => splash.classList.add("hidden"), 500);
+}
+
+function showError(msg) {
+  clearInterval(progressInterval);
+  const el = document.createElement("p");
+  el.style.cssText = "color:#A34B4B;font-size:13px;margin-top:1rem;";
+  el.textContent = msg;
+  document.querySelector(".splash-content").appendChild(el);
+}
+
+// Safety: dismiss splash after 15s no matter what
+setTimeout(() => {
+  if (!splash.classList.contains("hidden")) {
+    console.warn("Splash timeout — forcing dismiss");
+    dismissSplash();
+  }
+}, 15000);
+
+// ============================================================
+// ArcGIS Module Imports via $arcgis.import()
+// ============================================================
+let Map, MapView, GraphicsLayer, Graphic, Point, Polyline,
+  SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol,
+  WebTileLayer, Basemap, esriConfig, reactiveUtils;
+
+try {
+  [
+    esriConfig,
+    Map,
+    MapView,
+    GraphicsLayer,
+    Graphic,
+    Point,
+    Polyline,
+    SimpleMarkerSymbol,
+    SimpleLineSymbol,
+    TextSymbol,
+    WebTileLayer,
+    Basemap,
+    reactiveUtils,
+  ] = await $arcgis.import([
+    "@arcgis/core/config.js",
+    "@arcgis/core/Map.js",
+    "@arcgis/core/views/MapView.js",
+    "@arcgis/core/layers/GraphicsLayer.js",
+    "@arcgis/core/Graphic.js",
+    "@arcgis/core/geometry/Point.js",
+    "@arcgis/core/geometry/Polyline.js",
+    "@arcgis/core/symbols/SimpleMarkerSymbol.js",
+    "@arcgis/core/symbols/SimpleLineSymbol.js",
+    "@arcgis/core/symbols/TextSymbol.js",
+    "@arcgis/core/layers/WebTileLayer.js",
+    "@arcgis/core/Basemap.js",
+    "@arcgis/core/reactiveUtils.js",
+  ]);
+} catch (err) {
+  console.error("Failed to load ArcGIS modules:", err);
+  showError("Failed to load map SDK. Check your connection and refresh.");
+  throw err;
+}
+
+// ============================================================
+// API Key & Basemap
+// ============================================================
+let mapBasemap;
+
+if (ARCGIS_API_KEY) {
+  esriConfig.apiKey = ARCGIS_API_KEY;
+  mapBasemap = "arcgis/charted-territory";
+} else {
+  // Free CartoDB dark tiles — no API key needed
+  const darkTiles = new WebTileLayer({
+    urlTemplate:
+      "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}.png",
+    subDomains: ["a", "b", "c", "d"],
+    copyright: "CartoDB",
+  });
+  mapBasemap = new Basemap({ baseLayers: [darkTiles] });
+}
 
 // ============================================================
 // State
@@ -60,19 +132,16 @@ const labelLayer = new GraphicsLayer({ title: "Labels" });
 // Map & View
 // ============================================================
 const map = new Map({
-  basemap: "arcgis/charted-territory",
+  basemap: mapBasemap,
   layers: [routeLayer, cityLayer, labelLayer],
 });
 
 const view = new MapView({
   container: "viewDiv",
-  map: map,
+  map,
   center: [30, 37],
   zoom: 5,
-  constraints: {
-    minZoom: 3,
-    maxZoom: 12,
-  },
+  constraints: { minZoom: 3, maxZoom: 12 },
   popup: { autoOpenEnabled: false },
   ui: { components: ["zoom"] },
   navigation: {
@@ -81,13 +150,18 @@ const view = new MapView({
   },
 });
 
-// Position zoom widget
 view.ui.move("zoom", "bottom-right");
+
+// Dismiss splash when the view is ready
+view.when(dismissSplash).catch((err) => {
+  console.error("MapView failed:", err);
+  showError("Map failed to load. You may need an ArcGIS API key.");
+  dismissSplash(); // Still dismiss so user can see the error
+});
 
 // ============================================================
 // Drawing Helpers
 // ============================================================
-
 function getJourneyColor(journeyId) {
   const j = journeys.find((j) => j.id === journeyId);
   return j ? j.color : [150, 150, 150];
@@ -123,12 +197,10 @@ function drawRoutes() {
     const visible = activeJourney === "all" || activeJourney === route.journey;
     const opacity = visible ? 0.85 : 0.08;
 
-    // Draw outbound path
     if (route.outbound && route.outbound.length > 1) {
-      const line = new Polyline({ paths: [route.outbound] });
       routeLayer.add(
         new Graphic({
-          geometry: line,
+          geometry: new Polyline({ paths: [route.outbound] }),
           symbol: new SimpleLineSymbol({
             color: [...journey.color, opacity * 255],
             width: visible ? 3 : 1.5,
@@ -141,12 +213,10 @@ function drawRoutes() {
       );
     }
 
-    // Draw return path (dashed)
     if (route.returnPath && route.returnPath.length > 1) {
-      const line = new Polyline({ paths: [route.returnPath] });
       routeLayer.add(
         new Graphic({
-          geometry: line,
+          geometry: new Polyline({ paths: [route.returnPath] }),
           symbol: new SimpleLineSymbol({
             color: [...journey.color, opacity * 200],
             width: visible ? 2.5 : 1,
@@ -185,7 +255,7 @@ function drawCities() {
         geometry: point,
         symbol: new SimpleMarkerSymbol({
           style: "circle",
-          size: size,
+          size,
           color: [...color, opacity * 255],
           outline: {
             color: [255, 255, 255, opacity * 180],
@@ -196,7 +266,7 @@ function drawCities() {
       })
     );
 
-    // Glow effect for major cities
+    // Glow for major cities
     if (city.significance === "major" && isVisible) {
       cityLayer.add(
         new Graphic({
@@ -242,34 +312,31 @@ function drawCities() {
 // ============================================================
 function getFilteredCities() {
   const visible = new Set();
-
   cities.forEach((city) => {
     if (activeJourney === "all") {
       if (selectedChapter) {
-        const hasChapter = city.events.some(
-          (e) => `${e.book} ${e.chapter}` === selectedChapter
-        );
-        if (hasChapter) visible.add(city.id);
+        if (city.events.some((e) => `${e.book} ${e.chapter}` === selectedChapter))
+          visible.add(city.id);
       } else {
         visible.add(city.id);
       }
     } else {
-      const hasJourney = city.journeys.includes(activeJourney);
-      if (hasJourney) {
+      if (city.journeys.includes(activeJourney)) {
         if (selectedChapter) {
-          const hasChapter = city.events.some(
-            (e) =>
-              e.journey === activeJourney &&
-              `${e.book} ${e.chapter}` === selectedChapter
-          );
-          if (hasChapter) visible.add(city.id);
+          if (
+            city.events.some(
+              (e) =>
+                e.journey === activeJourney &&
+                `${e.book} ${e.chapter}` === selectedChapter
+            )
+          )
+            visible.add(city.id);
         } else {
           visible.add(city.id);
         }
       }
     }
   });
-
   return visible;
 }
 
@@ -294,14 +361,11 @@ chips.forEach((chip) => {
     closeBottomSheet();
     refresh();
 
-    // Zoom to journey extent
     if (activeJourney !== "all") {
       const journeyCities = cities.filter((c) =>
         c.journeys.includes(activeJourney)
       );
-      if (journeyCities.length > 0) {
-        zoomToCities(journeyCities);
-      }
+      if (journeyCities.length > 0) zoomToCities(journeyCities);
     } else {
       view.goTo({ center: [30, 37], zoom: 5 }, { duration: 800 });
     }
@@ -311,14 +375,16 @@ chips.forEach((chip) => {
 function zoomToCities(citiesList) {
   const lngs = citiesList.map((c) => c.lng);
   const lats = citiesList.map((c) => c.lat);
-  const extent = {
-    xmin: Math.min(...lngs) - 2,
-    ymin: Math.min(...lats) - 2,
-    xmax: Math.max(...lngs) + 2,
-    ymax: Math.max(...lats) + 2,
-    spatialReference: { wkid: 4326 },
-  };
-  view.goTo(extent, { duration: 800 });
+  view.goTo(
+    {
+      xmin: Math.min(...lngs) - 2,
+      ymin: Math.min(...lats) - 2,
+      xmax: Math.max(...lngs) + 2,
+      ymax: Math.max(...lats) + 2,
+      spatialReference: { wkid: 4326 },
+    },
+    { duration: 800 }
+  );
 }
 
 // ============================================================
@@ -332,9 +398,7 @@ const chapterList = document.getElementById("chapterList");
 
 btnScripture.addEventListener("click", () => {
   scripturePanel.classList.toggle("hidden");
-  if (!scripturePanel.classList.contains("hidden")) {
-    buildChapterList();
-  }
+  if (!scripturePanel.classList.contains("hidden")) buildChapterList();
 });
 
 closeScripture.addEventListener("click", () => {
@@ -343,27 +407,25 @@ closeScripture.addEventListener("click", () => {
 
 function buildChapterList(filter = "") {
   chapterList.innerHTML = "";
-
   const filterLower = filter.toLowerCase();
 
   allChapters.forEach((chapter) => {
     const entries = scriptureIndex[chapter] || [];
     if (entries.length === 0) return;
 
-    // Filter by search text
     if (filterLower) {
-      const matchChapter = chapter.toLowerCase().includes(filterLower);
-      const matchVerse = entries.some(
-        (e) =>
-          e.event.verse.toLowerCase().includes(filterLower) ||
-          e.event.description.toLowerCase().includes(filterLower)
-      );
-      if (!matchChapter && !matchVerse) return;
+      const match =
+        chapter.toLowerCase().includes(filterLower) ||
+        entries.some(
+          (e) =>
+            e.event.verse.toLowerCase().includes(filterLower) ||
+            e.event.description.toLowerCase().includes(filterLower)
+        );
+      if (!match) return;
     }
 
     const chapterDiv = document.createElement("div");
 
-    // Chapter header
     const header = document.createElement("div");
     header.className = `chapter-item${selectedChapter === chapter ? " active" : ""}`;
     header.innerHTML = `
@@ -371,32 +433,24 @@ function buildChapterList(filter = "") {
       <span class="chapter-count">${entries.length} ${entries.length === 1 ? "event" : "events"}</span>
     `;
     header.addEventListener("click", () => {
-      if (selectedChapter === chapter) {
-        selectedChapter = null;
-      } else {
-        selectedChapter = chapter;
-      }
+      selectedChapter = selectedChapter === chapter ? null : chapter;
       updateChapterHighlights();
       refresh();
       buildChapterList(filter);
-
-      // Zoom to relevant cities
       if (selectedChapter) {
-        const matchCities = entries.map((e) =>
-          cities.find((c) => c.id === e.cityId)
-        ).filter(Boolean);
+        const matchCities = entries
+          .map((e) => cities.find((c) => c.id === e.cityId))
+          .filter(Boolean);
         if (matchCities.length > 0) zoomToCities(matchCities);
       }
     });
     chapterDiv.appendChild(header);
 
-    // Verse sub-items
     const sublist = document.createElement("div");
     sublist.className = "verse-sublist";
     entries.forEach((entry) => {
       const city = cities.find((c) => c.id === entry.cityId);
       if (!city) return;
-
       const verseDiv = document.createElement("div");
       verseDiv.className = "verse-item";
       verseDiv.innerHTML = `
@@ -407,10 +461,7 @@ function buildChapterList(filter = "") {
         e.stopPropagation();
         selectCity(city.id);
         scripturePanel.classList.add("hidden");
-        view.goTo(
-          { center: [city.lng, city.lat], zoom: 8 },
-          { duration: 600 }
-        );
+        view.goTo({ center: [city.lng, city.lat], zoom: 8 }, { duration: 600 });
       });
       sublist.appendChild(verseDiv);
     });
@@ -421,8 +472,7 @@ function buildChapterList(filter = "") {
 }
 
 function updateChapterHighlights() {
-  const items = chapterList.querySelectorAll(".chapter-item");
-  items.forEach((item) => {
+  chapterList.querySelectorAll(".chapter-item").forEach((item) => {
     const name = item.querySelector(".chapter-name").textContent;
     item.classList.toggle("active", name === selectedChapter);
   });
@@ -447,40 +497,31 @@ btnToggleNames.addEventListener("click", () => {
     : "Showing: Modern Names";
   nameToggle.classList.add("visible");
   clearTimeout(nameToggleTimeout);
-  nameToggleTimeout = setTimeout(() => {
-    nameToggle.classList.remove("visible");
-  }, 2000);
-  drawCities(); // Refresh labels
+  nameToggleTimeout = setTimeout(() => nameToggle.classList.remove("visible"), 2000);
+  drawCities();
 });
 
 // ============================================================
 // UI: Info Modal
 // ============================================================
-const btnInfo = document.getElementById("btnInfo");
-const infoModal = document.getElementById("infoModal");
-
-btnInfo.addEventListener("click", () => {
-  infoModal.open = true;
+document.getElementById("btnInfo").addEventListener("click", () => {
+  document.getElementById("infoModal").open = true;
 });
 
 // ============================================================
 // UI: Bottom Sheet
 // ============================================================
 const bottomSheet = document.getElementById("bottomSheet");
-const sheetContent = document.getElementById("sheetContent");
 const sheetBiblicalName = document.getElementById("sheetBiblicalName");
 const sheetModernName = document.getElementById("sheetModernName");
 const sheetEvents = document.getElementById("sheetEvents");
-const closeSheet = document.getElementById("closeSheet");
 const sheetHandle = document.getElementById("sheetHandle");
 
 function openBottomSheet(city) {
   selectedCity = city;
-
   sheetBiblicalName.textContent = city.biblicalName;
   sheetModernName.textContent = `Modern: ${city.modernName}  |  Region: ${city.region}`;
 
-  // Filter events by active journey
   let eventsToShow = city.events;
   if (activeJourney !== "all") {
     eventsToShow = city.events.filter((e) => e.journey === activeJourney);
@@ -508,7 +549,7 @@ function closeBottomSheet() {
   selectedCity = null;
 }
 
-closeSheet.addEventListener("click", closeBottomSheet);
+document.getElementById("closeSheet").addEventListener("click", closeBottomSheet);
 
 // Touch drag to dismiss on mobile
 let sheetStartY = 0;
@@ -525,9 +566,7 @@ document.addEventListener("touchmove", (e) => {
   if (!isDragging) return;
   sheetCurrentY = e.touches[0].clientY;
   const diff = sheetCurrentY - sheetStartY;
-  if (diff > 0) {
-    bottomSheet.style.transform = `translateY(${diff}px)`;
-  }
+  if (diff > 0) bottomSheet.style.transform = `translateY(${diff}px)`;
 });
 
 document.addEventListener("touchend", () => {
@@ -537,11 +576,6 @@ document.addEventListener("touchend", () => {
   const diff = sheetCurrentY - sheetStartY;
   if (diff > 100) {
     closeBottomSheet();
-  } else {
-    bottomSheet.style.transform = "";
-    if (bottomSheet.classList.contains("open")) {
-      bottomSheet.style.transform = "translateY(0)";
-    }
   }
   bottomSheet.style.transform = "";
 });
@@ -558,25 +592,18 @@ function selectCity(cityId) {
 }
 
 function highlightCity(cityId) {
-  // Re-draw to update highlight state
   drawCities();
-
-  // Add highlight ring
   const city = cities.find((c) => c.id === cityId);
   if (!city) return;
 
-  const point = new Point({ longitude: city.lng, latitude: city.lat });
   cityLayer.add(
     new Graphic({
-      geometry: point,
+      geometry: new Point({ longitude: city.lng, latitude: city.lat }),
       symbol: new SimpleMarkerSymbol({
         style: "circle",
         size: getCitySize(city.significance) + 16,
         color: [201, 168, 76, 30],
-        outline: {
-          color: [201, 168, 76, 200],
-          width: 2,
-        },
+        outline: { color: [201, 168, 76, 200], width: 2 },
       }),
       attributes: { cityId: city.id, type: "highlight" },
     })
@@ -586,10 +613,7 @@ function highlightCity(cityId) {
 view.on("click", (event) => {
   view.hitTest(event).then((response) => {
     const cityGraphic = response.results.find(
-      (r) =>
-        r.graphic &&
-        r.graphic.attributes &&
-        r.graphic.attributes.type === "city"
+      (r) => r.graphic?.attributes?.type === "city"
     );
 
     if (cityGraphic) {
@@ -602,43 +626,21 @@ view.on("click", (event) => {
           { duration: 500 }
         );
       }
-    } else {
-      // Clicked on empty map — close sheet
-      if (!event.native.target.closest(".bottom-sheet")) {
-        closeBottomSheet();
-      }
+    } else if (!event.native.target.closest(".bottom-sheet")) {
+      closeBottomSheet();
     }
   });
 });
 
-// Update labels on zoom change
+// Debounced label refresh on zoom
+let zoomTimer;
 reactiveUtils.watch(
   () => view.zoom,
   () => {
-    drawCities();
+    clearTimeout(zoomTimer);
+    zoomTimer = setTimeout(() => drawCities(), 150);
   }
 );
-
-// ============================================================
-// Splash Screen
-// ============================================================
-const splash = document.getElementById("splash");
-const loaderBar = document.querySelector(".splash-loader-bar");
-
-let progress = 0;
-const progressInterval = setInterval(() => {
-  progress += Math.random() * 15;
-  if (progress > 90) progress = 90;
-  loaderBar.style.width = progress + "%";
-}, 200);
-
-view.when(() => {
-  clearInterval(progressInterval);
-  loaderBar.style.width = "100%";
-  setTimeout(() => {
-    splash.classList.add("hidden");
-  }, 600);
-});
 
 // ============================================================
 // Initial Draw
