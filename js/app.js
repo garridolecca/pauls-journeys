@@ -169,14 +169,31 @@ function getJourneyHex(journeyId) {
 
 function getCitySize(significance) {
   switch (significance) {
-    case "major": return 10;
-    case "moderate": return 7;
-    default: return 5;
+    case "major": return 18;
+    case "moderate": return 15;
+    default: return 12;
   }
 }
 
 function getCityOutlineWidth(significance) {
-  return significance === "major" ? 2.5 : 1.5;
+  return significance === "major" ? 2.5 : 2;
+}
+
+function getCityStopNumber(city) {
+  if (activeJourney === "all") {
+    // Show the stop number from the city's primary (first) journey
+    const event = city.events[0];
+    return event ? event.order : null;
+  }
+  const event = city.events.find((e) => e.journey === activeJourney);
+  return event ? event.order : null;
+}
+
+function getStopJourneyColor(city) {
+  if (activeJourney === "all") {
+    return getJourneyColor(city.journeys[0]);
+  }
+  return getJourneyColor(activeJourney);
 }
 
 // ============================================================
@@ -237,21 +254,37 @@ function drawCities() {
 
   cities.forEach((city) => {
     const isVisible = filteredCities.has(city.id);
-    const primaryJourney = city.journeys[0];
-    const color = getJourneyColor(primaryJourney);
+    const markerColor = getStopJourneyColor(city);
     const size = getCitySize(city.significance);
     const opacity = isVisible ? 1 : 0.1;
+    const stopNumber = getCityStopNumber(city);
 
     const point = new Point({ longitude: city.lng, latitude: city.lat });
 
-    // City marker
+    // Glow for major cities (behind marker)
+    if (city.significance === "major" && isVisible) {
+      cityLayer.add(
+        new Graphic({
+          geometry: point,
+          symbol: new SimpleMarkerSymbol({
+            style: "circle",
+            size: size + 12,
+            color: [markerColor[0], markerColor[1], markerColor[2], 35],
+            outline: { color: [0, 0, 0, 0], width: 0 },
+          }),
+          attributes: { cityId: city.id, type: "glow" },
+        })
+      );
+    }
+
+    // City marker (circle background for the number)
     cityLayer.add(
       new Graphic({
         geometry: point,
         symbol: new SimpleMarkerSymbol({
           style: "circle",
           size,
-          color: [...color, opacity * 255],
+          color: [...markerColor, opacity * 255],
           outline: {
             color: [255, 255, 255, opacity * 180],
             width: getCityOutlineWidth(city.significance),
@@ -261,23 +294,33 @@ function drawCities() {
       })
     );
 
-    // Glow for major cities
-    if (city.significance === "major" && isVisible) {
+    // Stop number inside the marker
+    if (stopNumber != null && isVisible) {
+      const numFontSize = city.significance === "major" ? 9 : city.significance === "moderate" ? 8 : 7;
       cityLayer.add(
         new Graphic({
           geometry: point,
-          symbol: new SimpleMarkerSymbol({
-            style: "circle",
-            size: size + 10,
-            color: [color[0], color[1], color[2], 40],
-            outline: { color: [0, 0, 0, 0], width: 0 },
+          symbol: new TextSymbol({
+            text: String(stopNumber),
+            color: [255, 255, 255, 255],
+            haloColor: [0, 0, 0, 120],
+            haloSize: 0.5,
+            font: {
+              size: numFontSize,
+              family: "Arial",
+              weight: "bold",
+            },
+            yoffset: 0,
+            xoffset: 0,
+            horizontalAlignment: "center",
+            verticalAlignment: "middle",
           }),
-          attributes: { cityId: city.id, type: "glow" },
+          attributes: { cityId: city.id, type: "stopNumber" },
         })
       );
     }
 
-    // Label
+    // City name label (above the marker)
     if (isVisible && (city.significance !== "minor" || view.zoom > 6)) {
       const labelText = showBiblicalNames ? city.biblicalName : city.modernName;
       labelLayer.add(
@@ -293,7 +336,7 @@ function drawCities() {
               family: "Avenir Next LT Pro",
               weight: city.significance === "major" ? "bold" : "normal",
             },
-            yoffset: size + 6,
+            yoffset: size / 2 + 8,
           }),
           attributes: { cityId: city.id, type: "label" },
         })
@@ -596,7 +639,7 @@ function highlightCity(cityId) {
       geometry: new Point({ longitude: city.lng, latitude: city.lat }),
       symbol: new SimpleMarkerSymbol({
         style: "circle",
-        size: getCitySize(city.significance) + 16,
+        size: getCitySize(city.significance) + 12,
         color: [201, 168, 76, 30],
         outline: { color: [201, 168, 76, 200], width: 2 },
       }),
