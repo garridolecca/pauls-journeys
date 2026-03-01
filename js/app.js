@@ -4,7 +4,7 @@
  *
  * CONFIGURATION: To use Esri's premium basemaps, set your API key below.
  * Get a free key at https://developers.arcgis.com/
- * Without a key, the app uses CartoDB dark tiles (no key required).
+ * Without a key, the app uses OpenStreetMap tiles (no key required).
  */
 const ARCGIS_API_KEY = ""; // Paste your key here
 
@@ -56,7 +56,7 @@ setTimeout(() => {
 // ============================================================
 let Map, MapView, GraphicsLayer, Graphic, Point, Polyline,
   SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol,
-  WebTileLayer, Basemap, esriConfig, reactiveUtils;
+  OpenStreetMapLayer, Basemap, esriConfig, reactiveUtils;
 
 try {
   [
@@ -70,7 +70,7 @@ try {
     SimpleMarkerSymbol,
     SimpleLineSymbol,
     TextSymbol,
-    WebTileLayer,
+    OpenStreetMapLayer,
     Basemap,
     reactiveUtils,
   ] = await $arcgis.import([
@@ -84,9 +84,9 @@ try {
     "@arcgis/core/symbols/SimpleMarkerSymbol.js",
     "@arcgis/core/symbols/SimpleLineSymbol.js",
     "@arcgis/core/symbols/TextSymbol.js",
-    "@arcgis/core/layers/WebTileLayer.js",
+    "@arcgis/core/layers/OpenStreetMapLayer.js",
     "@arcgis/core/Basemap.js",
-    "@arcgis/core/reactiveUtils.js",
+    "@arcgis/core/core/reactiveUtils.js",
   ]);
 } catch (err) {
   console.error("Failed to load ArcGIS modules:", err);
@@ -103,14 +103,9 @@ if (ARCGIS_API_KEY) {
   esriConfig.apiKey = ARCGIS_API_KEY;
   mapBasemap = "arcgis/charted-territory";
 } else {
-  // Free CartoDB dark tiles — no API key needed
-  const darkTiles = new WebTileLayer({
-    urlTemplate:
-      "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}.png",
-    subDomains: ["a", "b", "c", "d"],
-    copyright: "CartoDB",
-  });
-  mapBasemap = new Basemap({ baseLayers: [darkTiles] });
+  // OpenStreetMap tiles — no API key required
+  const osm = new OpenStreetMapLayer();
+  mapBasemap = new Basemap({ baseLayers: [osm] });
 }
 
 // ============================================================
@@ -295,7 +290,7 @@ function drawCities() {
             haloSize: 2,
             font: {
               size: city.significance === "major" ? 11 : 9,
-              family: "Cinzel, Georgia, serif",
+              family: "Avenir Next LT Pro",
               weight: city.significance === "major" ? "bold" : "normal",
             },
             yoffset: size + 6,
