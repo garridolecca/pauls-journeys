@@ -234,9 +234,9 @@ async function initMap() {
     esriConfig.apiKey = ARCGIS_API_KEY;
     mapBasemap = "arcgis/human-geography";
   } else {
-    // CartoDB Positron — light gray tiles with Latin-script labels, no API key needed
+    // CartoDB Positron NO LABELS — clean light gray tiles, we draw our own translated labels
     const cartoLayer = new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}@2x.png",
+      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_nolabels/{level}/{col}/{row}@2x.png",
       subDomains: ["a", "b", "c", "d"],
       copyright: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     });
@@ -254,16 +254,79 @@ async function initMap() {
   // ============================================================
   // Layers
   // ============================================================
+  const geoLayer = new GraphicsLayer({ title: "GeoLabels" });
   const routeLayer = new GraphicsLayer({ title: "Routes" });
   const cityLayer = new GraphicsLayer({ title: "Cities" });
   const labelLayer = new GraphicsLayer({ title: "Labels" });
+
+  // ============================================================
+  // Geographic Reference Labels (countries, seas, regions)
+  // ============================================================
+  const geoLabels = [
+    // Water bodies — italic style
+    { en: "Mediterranean Sea", es: "Mar Mediterráneo", lat: 34.5, lng: 18.0, size: 13, italic: true, color: [70, 100, 140] },
+    { en: "Aegean\nSea", es: "Mar\nEgeo", lat: 38.5, lng: 25.0, size: 10, italic: true, color: [70, 100, 140] },
+    { en: "Black Sea", es: "Mar Negro", lat: 43.0, lng: 34.0, size: 11, italic: true, color: [70, 100, 140] },
+    { en: "Adriatic Sea", es: "Mar Adriático", lat: 42.5, lng: 16.0, size: 9, italic: true, color: [70, 100, 140] },
+    { en: "Red\nSea", es: "Mar\nRojo", lat: 24.5, lng: 36.5, size: 9, italic: true, color: [70, 100, 140] },
+    // Countries & regions — normal style
+    { en: "ITALY", es: "ITALIA", lat: 43.0, lng: 11.5, size: 11, color: [100, 90, 80] },
+    { en: "GREECE", es: "GRECIA", lat: 39.5, lng: 21.5, size: 10, color: [100, 90, 80] },
+    { en: "TURKEY", es: "TURQUÍA", lat: 39.5, lng: 33.0, size: 12, color: [100, 90, 80] },
+    { en: "SYRIA", es: "SIRIA", lat: 35.0, lng: 38.5, size: 10, color: [100, 90, 80] },
+    { en: "EGYPT", es: "EGIPTO", lat: 27.0, lng: 29.0, size: 12, color: [100, 90, 80] },
+    { en: "LIBYA", es: "LIBIA", lat: 28.0, lng: 18.0, size: 11, color: [100, 90, 80] },
+    { en: "CYPRUS", es: "CHIPRE", lat: 35.3, lng: 33.3, size: 8, color: [100, 90, 80] },
+    { en: "CRETE", es: "CRETA", lat: 35.0, lng: 24.8, size: 8, color: [100, 90, 80] },
+    { en: "LEBANON", es: "LÍBANO", lat: 33.8, lng: 35.9, size: 7, color: [100, 90, 80] },
+    { en: "ISRAEL", es: "ISRAEL", lat: 31.5, lng: 34.8, size: 8, color: [100, 90, 80] },
+    { en: "SAUDI ARABIA", es: "ARABIA SAUDITA", lat: 24.0, lng: 42.0, size: 11, color: [100, 90, 80] },
+    { en: "JORDAN", es: "JORDANIA", lat: 31.2, lng: 37.0, size: 8, color: [100, 90, 80] },
+    { en: "IRAQ", es: "IRAK", lat: 33.5, lng: 43.5, size: 10, color: [100, 90, 80] },
+    { en: "SICILY", es: "SICILIA", lat: 37.5, lng: 14.2, size: 8, color: [100, 90, 80] },
+    { en: "MALTA", es: "MALTA", lat: 36.1, lng: 14.4, size: 7, color: [100, 90, 80] },
+    { en: "TUNISIA", es: "TÚNEZ", lat: 34.5, lng: 9.0, size: 9, color: [100, 90, 80] },
+    { en: "BULGARIA", es: "BULGARIA", lat: 42.7, lng: 25.5, size: 8, color: [100, 90, 80] },
+    { en: "MACEDONIA", es: "MACEDONIA", lat: 41.2, lng: 21.7, size: 7, color: [100, 90, 80] },
+    { en: "IRAN", es: "IRÁN", lat: 32.5, lng: 53.0, size: 11, color: [100, 90, 80] },
+  ];
+
+  function drawGeoLabels() {
+    geoLayer.removeAll();
+    // Skip geo labels if using Esri basemap (it has its own labels)
+    if (ARCGIS_API_KEY) return;
+
+    geoLabels.forEach((geo) => {
+      const text = lang === "es" ? geo.es : geo.en;
+      geoLayer.add(
+        new Graphic({
+          geometry: new Point({ longitude: geo.lng, latitude: geo.lat }),
+          symbol: new TextSymbol({
+            text,
+            color: [...geo.color, 160],
+            haloColor: [255, 255, 255, 100],
+            haloSize: 1,
+            font: {
+              size: geo.size,
+              family: "Avenir Next LT Pro",
+              weight: geo.italic ? "normal" : "bold",
+              style: geo.italic ? "italic" : "normal",
+            },
+            horizontalAlignment: "center",
+            verticalAlignment: "middle",
+            lineWidth: 200,
+          }),
+        })
+      );
+    });
+  }
 
   // ============================================================
   // Map & View
   // ============================================================
   const map = new Map({
     basemap: mapBasemap,
-    layers: [routeLayer, cityLayer, labelLayer],
+    layers: [geoLayer, routeLayer, cityLayer, labelLayer],
   });
 
   const view = new MapView({
@@ -517,6 +580,7 @@ async function initMap() {
   }
 
   function refresh() {
+    drawGeoLabels();
     drawRoutes();
     drawCities();
   }
