@@ -4,7 +4,7 @@
  *
  * CONFIGURATION: To use Esri's premium basemaps, set your API key below.
  * Get a free key at https://developers.arcgis.com/
- * Without a key, the app uses OpenStreetMap tiles (no key required).
+ * Without a key, the app uses CartoDB dark tiles (no key required).
  */
 const ARCGIS_API_KEY = ""; // Paste your key here
 
@@ -35,7 +35,7 @@ const splash = document.getElementById("splash");
 const loaderBar = document.querySelector(".splash-loader-bar");
 
 // ============================================================
-// Language Selector Flow
+// Language Selector Flow (initial launch)
 // ============================================================
 document.querySelectorAll(".lang-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -112,7 +112,7 @@ async function initMap() {
   // ============================================================
   let Map, MapView, GraphicsLayer, Graphic, Point, Polyline,
     SimpleMarkerSymbol, SimpleLineSymbol, TextSymbol,
-    OpenStreetMapLayer, Basemap, esriConfig, reactiveUtils;
+    WebTileLayer, Basemap, esriConfig, reactiveUtils;
 
   try {
     [
@@ -126,7 +126,7 @@ async function initMap() {
       SimpleMarkerSymbol,
       SimpleLineSymbol,
       TextSymbol,
-      OpenStreetMapLayer,
+      WebTileLayer,
       Basemap,
       reactiveUtils,
     ] = await $arcgis.import([
@@ -140,7 +140,7 @@ async function initMap() {
       "@arcgis/core/symbols/SimpleMarkerSymbol.js",
       "@arcgis/core/symbols/SimpleLineSymbol.js",
       "@arcgis/core/symbols/TextSymbol.js",
-      "@arcgis/core/layers/OpenStreetMapLayer.js",
+      "@arcgis/core/layers/WebTileLayer.js",
       "@arcgis/core/Basemap.js",
       "@arcgis/core/core/reactiveUtils.js",
     ]);
@@ -161,8 +161,13 @@ async function initMap() {
     esriConfig.apiKey = ARCGIS_API_KEY;
     mapBasemap = "arcgis/charted-territory";
   } else {
-    const osm = new OpenStreetMapLayer();
-    mapBasemap = new Basemap({ baseLayers: [osm] });
+    // CartoDB Dark Matter — dark tiles with Latin-script labels, no API key needed
+    const cartoLayer = new WebTileLayer({
+      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}@2x.png",
+      subDomains: ["a", "b", "c", "d"],
+      copyright: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    });
+    mapBasemap = new Basemap({ baseLayers: [cartoLayer] });
   }
 
   // ============================================================
@@ -583,7 +588,6 @@ async function initMap() {
   function updateChapterHighlights() {
     chapterList.querySelectorAll(".chapter-item").forEach((item) => {
       const name = item.querySelector(".chapter-name").textContent;
-      // Compare against both English and translated chapter name
       const isActive = allChapters.some(
         (ch) => (ch === name || displayChapter(ch) === name) && ch === selectedChapter
       );
@@ -612,6 +616,26 @@ async function initMap() {
     clearTimeout(nameToggleTimeout);
     nameToggleTimeout = setTimeout(() => nameToggle.classList.remove("visible"), 2000);
     drawCities();
+  });
+
+  // ============================================================
+  // UI: Language Switch (in-app toggle)
+  // ============================================================
+  document.getElementById("btnLang").addEventListener("click", () => {
+    const newLang = lang === "en" ? "es" : "en";
+    setLang(newLang);
+    applyTranslations();
+    refresh();
+
+    // Rebuild scripture panel if open
+    if (!scripturePanel.classList.contains("hidden")) {
+      buildChapterList(scriptureSearch.value || "");
+    }
+
+    // Re-open bottom sheet for current city if visible
+    if (selectedCity && bottomSheet.classList.contains("open")) {
+      openBottomSheet(selectedCity);
+    }
   });
 
   // ============================================================
@@ -829,9 +853,19 @@ function applyTranslations() {
   navLogo.setAttribute("heading", t("appTitle"));
   navLogo.setAttribute("description", t("appSubtitle"));
 
-  // Header buttons
+  // Header buttons text
   document.getElementById("btnScripture").textContent = t("btnScripture");
   document.getElementById("btnToggleNames").textContent = t("btnNames");
+
+  // Donate button text
+  const donateBtnText = document.getElementById("donateBtnText");
+  if (donateBtnText) donateBtnText.textContent = lang === "es" ? "Apoya" : "Support";
+  document.getElementById("btnDonate").setAttribute("title",
+    lang === "es" ? "Apoya este proyecto" : "Support this project");
+
+  // Language switch button — shows the OTHER language
+  const langBtnText = document.getElementById("langBtnText");
+  if (langBtnText) langBtnText.textContent = lang === "en" ? "ES" : "EN";
 
   // Journey chips
   document.querySelectorAll(".journey-chip").forEach((chip) => {
@@ -843,8 +877,4 @@ function applyTranslations() {
   // Scripture panel
   document.getElementById("scripturePanelTitle").textContent = t("scripturePanelTitle");
   document.getElementById("scriptureSearch").setAttribute("placeholder", t("scriptureSearchPlaceholder"));
-
-  // Donate button title
-  document.getElementById("btnDonate").setAttribute("title",
-    lang === "es" ? "Apoya este proyecto" : "Support this project");
 }
