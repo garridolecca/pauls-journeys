@@ -431,6 +431,53 @@ calcite-shell {
   gap: 16px;
 }
 
+/* Sheet Navigation (Prev / Next) */
+.sheet-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 4px;
+  margin-top: 12px;
+  border-top: 1px solid var(--card-border);
+}
+
+.sheet-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sheet-nav-btn:hover:not(:disabled) {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.sheet-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sheet-nav-btn svg {
+  flex-shrink: 0;
+}
+
+.sheet-nav-counter {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 /* Event Card */
 .event-card {
   background: var(--card-bg);

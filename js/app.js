@@ -782,8 +782,88 @@ async function initMap() {
   const sheetEvents = document.getElementById("sheetEvents");
   const sheetHandle = document.getElementById("sheetHandle");
 
+  // ---- Stop navigation state ----
+  let orderedStops = []; // array of city objects in route order
+  let currentStopIndex = -1;
+
+  /**
+   * Build an ordered list of stops for the current view.
+   * When a specific journey is selected: cities ordered by their event.order for that journey.
+   * When "all": cities ordered by journey then order.
+   */
+  function buildStopList() {
+    const stops = [];
+    if (activeJourney !== "all") {
+      cities.forEach((city) => {
+        const event = city.events.find((e) => e.journey === activeJourney);
+        if (event) stops.push({ city, order: event.order, journey: activeJourney });
+      });
+      stops.sort((a, b) => a.order - b.order);
+    } else {
+      // All journeys: order by journey id, then by event order
+      [1, 2, 3, 4].forEach((jId) => {
+        cities.forEach((city) => {
+          const event = city.events.find((e) => e.journey === jId);
+          if (event) stops.push({ city, order: event.order, journey: jId });
+        });
+      });
+      // Remove duplicate cities — keep first appearance
+      const seen = new Set();
+      const unique = [];
+      stops.forEach((s) => {
+        if (!seen.has(s.city.id)) {
+          seen.add(s.city.id);
+          unique.push(s);
+        }
+      });
+      stops.length = 0;
+      stops.push(...unique);
+    }
+    orderedStops = stops.map((s) => s.city);
+  }
+
+  function updateNavButtons() {
+    const prevBtn = document.getElementById("btnPrevStop");
+    const nextBtn = document.getElementById("btnNextStop");
+    const counter = document.getElementById("stopCounter");
+    const prevLabel = document.getElementById("prevLabel");
+    const nextLabel = document.getElementById("nextLabel");
+
+    prevLabel.textContent = lang === "es" ? "Anterior" : "Previous";
+    nextLabel.textContent = lang === "es" ? "Siguiente" : "Next";
+
+    prevBtn.disabled = currentStopIndex <= 0;
+    nextBtn.disabled = currentStopIndex >= orderedStops.length - 1;
+    counter.textContent = `${currentStopIndex + 1} / ${orderedStops.length}`;
+  }
+
+  function navigateToStop(index) {
+    if (index < 0 || index >= orderedStops.length) return;
+    currentStopIndex = index;
+    const city = orderedStops[index];
+    openBottomSheet(city);
+    highlightCity(city.id);
+    view.goTo(
+      { center: [city.lng, city.lat], zoom: Math.max(view.zoom, 7) },
+      { duration: 500 }
+    );
+  }
+
+  document.getElementById("btnPrevStop").addEventListener("click", () => {
+    navigateToStop(currentStopIndex - 1);
+  });
+
+  document.getElementById("btnNextStop").addEventListener("click", () => {
+    navigateToStop(currentStopIndex + 1);
+  });
+
   function openBottomSheet(city) {
     selectedCity = city;
+
+    // Rebuild stop list and find current index
+    buildStopList();
+    currentStopIndex = orderedStops.findIndex((c) => c.id === city.id);
+
     const bName = cityText(city.id, "biblicalName") || city.biblicalName;
     const mName = cityText(city.id, "modernName") || city.modernName;
     const region = cityText(city.id, "region") || city.region;
@@ -817,7 +897,11 @@ async function initMap() {
       })
       .join("");
 
+    updateNavButtons();
     bottomSheet.classList.add("open");
+
+    // Scroll sheet content to top
+    document.getElementById("sheetContent").scrollTop = 0;
   }
 
   function closeBottomSheet() {
