@@ -9,7 +9,7 @@
     <meta name="description" content="Interactive map of the Apostle Paul's missionary journeys with scripture references, biblical and modern city names." />
     <title>Paul's Missionary Journeys</title>
 
-    <!-- ArcGIS Maps SDK 5.0 (unified: Core + Calcite + Components) -->
+    <!-- ArcGIS Maps SDK 5.0 -->
     <script type="module" src="https://js.arcgis.com/5.0/"></script>
     <link rel="stylesheet" href="https://js.arcgis.com/5.0/esri/themes/dark/main.css" />
 
@@ -23,15 +23,35 @@
   </head>
 
   <body class="calcite-mode-dark">
+
+    <!-- ==================== LANGUAGE SELECTOR ==================== -->
+    <div id="langSelector" class="lang-selector">
+      <div class="lang-content">
+        <div class="lang-cross">&#10013;</div>
+        <h1 class="lang-title">The Journeys of Paul<br><span class="lang-title-es">Los Viajes de Pablo</span></h1>
+        <p class="lang-subtitle">Choose your language / Elige tu idioma</p>
+        <div class="lang-buttons">
+          <button class="lang-btn" data-lang="en">
+            <span class="lang-flag">EN</span>
+            English
+          </button>
+          <button class="lang-btn" data-lang="es">
+            <span class="lang-flag">ES</span>
+            Espa&ntilde;ol
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== SPLASH SCREEN ==================== -->
-    <div id="splash" class="splash">
+    <div id="splash" class="splash hidden">
       <div class="splash-content">
         <div class="splash-cross">&#10013;</div>
-        <h1 class="splash-title">The Journeys of Paul</h1>
-        <p class="splash-subtitle">An Interactive Biblical Atlas</p>
+        <h1 id="splashTitle" class="splash-title">The Journeys of Paul</h1>
+        <p id="splashSubtitle" class="splash-subtitle">Interactive Biblical Atlas</p>
         <div class="splash-verse">
-          "I have fought the good fight, I have finished the race, I have kept the faith."
-          <span class="splash-ref">&mdash; 2 Timothy 4:7</span>
+          <span id="splashVerse">"I have fought the good fight, I have finished the race, I have kept the faith."</span>
+          <span id="splashRef" class="splash-ref">&mdash; 2 Timothy 4:7</span>
         </div>
         <div class="splash-loader">
           <div class="splash-loader-bar"></div>
@@ -46,36 +66,17 @@
       <calcite-navigation slot="header" class="app-header">
         <calcite-navigation-logo
           slot="logo"
+          id="navLogo"
           heading="Paul's Journeys"
           description="Interactive Biblical Atlas"
           icon="map"
         ></calcite-navigation-logo>
 
         <div slot="content-end" class="header-actions">
-          <calcite-button
-            id="btnScripture"
-            appearance="transparent"
-            icon-start="book"
-            kind="neutral"
-            scale="s"
-            class="header-btn"
-          >Scripture</calcite-button>
-          <calcite-button
-            id="btnToggleNames"
-            appearance="transparent"
-            icon-start="label"
-            kind="neutral"
-            scale="s"
-            class="header-btn"
-          >Names</calcite-button>
-          <calcite-button
-            id="btnInfo"
-            appearance="transparent"
-            icon-start="information"
-            kind="neutral"
-            scale="s"
-            class="header-btn hide-label-mobile"
-          ></calcite-button>
+          <calcite-button id="btnScripture" appearance="transparent" icon-start="book" kind="neutral" scale="s" class="header-btn">Scripture</calcite-button>
+          <calcite-button id="btnToggleNames" appearance="transparent" icon-start="label" kind="neutral" scale="s" class="header-btn">Names</calcite-button>
+          <calcite-button id="btnDonate" appearance="transparent" icon-start="heart" kind="neutral" scale="s" class="header-btn header-btn-icon-only" title="Support this project"></calcite-button>
+          <calcite-button id="btnInfo" appearance="transparent" icon-start="information" kind="neutral" scale="s" class="header-btn header-btn-icon-only"></calcite-button>
         </div>
       </calcite-navigation>
 
@@ -84,23 +85,23 @@
         <div class="journey-chips">
           <button class="journey-chip active" data-journey="all">
             <span class="chip-dot" style="background:#888"></span>
-            All Journeys
+            <span class="chip-label" data-i18n="chipAll">All Journeys</span>
           </button>
           <button class="journey-chip" data-journey="1">
             <span class="chip-dot" style="background:#C9A84C"></span>
-            Journey 1
+            <span class="chip-label" data-i18n="chip1">Journey 1</span>
           </button>
           <button class="journey-chip" data-journey="2">
             <span class="chip-dot" style="background:#8A4F7D"></span>
-            Journey 2
+            <span class="chip-label" data-i18n="chip2">Journey 2</span>
           </button>
           <button class="journey-chip" data-journey="3">
             <span class="chip-dot" style="background:#568259"></span>
-            Journey 3
+            <span class="chip-label" data-i18n="chip3">Journey 3</span>
           </button>
           <button class="journey-chip" data-journey="4">
             <span class="chip-dot" style="background:#A34B4B"></span>
-            To Rome
+            <span class="chip-label" data-i18n="chip4">To Rome</span>
           </button>
         </div>
       </div>
@@ -111,50 +112,46 @@
       <!-- ===== SCRIPTURE FILTER PANEL ===== -->
       <div id="scripturePanel" class="scripture-panel hidden">
         <div class="scripture-panel-header">
-          <h3>Filter by Scripture</h3>
-          <calcite-button
-            id="closeScripture"
-            appearance="transparent"
-            icon-start="x"
-            kind="neutral"
-            scale="s"
-          ></calcite-button>
+          <h3 id="scripturePanelTitle">Filter by Scripture</h3>
+          <calcite-button id="closeScripture" appearance="transparent" icon-start="x" kind="neutral" scale="s"></calcite-button>
         </div>
         <div class="scripture-search">
-          <calcite-input-text
-            id="scriptureSearch"
-            placeholder="Search verse (e.g. Acts 16:9)"
-            icon="search"
-            clearable
-            scale="m"
-          ></calcite-input-text>
+          <calcite-input-text id="scriptureSearch" placeholder="Search verse (e.g. Acts 16:9)" icon="search" clearable scale="m"></calcite-input-text>
         </div>
         <div id="chapterList" class="chapter-list"></div>
       </div>
 
       <!-- ===== INFO MODAL ===== -->
       <calcite-modal id="infoModal" scale="m" width-scale="s">
-        <h3 slot="header">About This Map</h3>
-        <div slot="content" class="info-content">
-          <p>This interactive atlas traces the <strong>four missionary journeys of the Apostle Paul</strong> as recorded in the book of Acts.</p>
-          <div class="info-legend">
-            <h4>Journey Legend</h4>
-            <div class="legend-item"><span class="legend-line" style="background:#C9A84C"></span>First Journey (AD 46-48) &mdash; Acts 13-14</div>
-            <div class="legend-item"><span class="legend-line" style="background:#8A4F7D"></span>Second Journey (AD 49-52) &mdash; Acts 15:36-18:22</div>
-            <div class="legend-item"><span class="legend-line" style="background:#568259"></span>Third Journey (AD 53-57) &mdash; Acts 18:23-21:17</div>
-            <div class="legend-item"><span class="legend-line" style="background:#A34B4B"></span>Journey to Rome (AD 59-60) &mdash; Acts 27-28</div>
+        <h3 slot="header" id="infoModalTitle">About This Map</h3>
+        <div slot="content" id="infoModalContent" class="info-content"></div>
+      </calcite-modal>
+
+      <!-- ===== DONATE MODAL ===== -->
+      <calcite-modal id="donateModal" scale="s" width-scale="s">
+        <h3 slot="header" id="donateModalTitle">Support This Project</h3>
+        <div slot="content" class="donate-content">
+          <p id="donateText" class="donate-text"></p>
+
+          <a href="https://venmo.com/u/garridolecca" target="_blank" rel="noopener" class="donate-venmo-btn" id="donateVenmoBtn">
+            <svg class="venmo-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.41 1.87c.75 1.22 1.09 2.48 1.09 4.07 0 5.07-4.33 11.65-7.84 16.27H6.59L3.5 2.23l6.76-.62 1.73 13.86C13.87 12.42 16 7.6 16 4.79c0-1.52-.26-2.56-.67-3.4l5.08.48z"/></svg>
+            <span id="donateBtnLabel">Donate via Venmo</span>
+          </a>
+
+          <div class="donate-qr-section">
+            <p class="donate-qr-label" id="donateQrLabel">Or scan this QR code:</p>
+            <img class="donate-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://venmo.com/u/garridolecca&bgcolor=221a20&color=C9A84C" alt="Venmo QR Code" width="150" height="150" />
           </div>
-          <div class="info-features">
-            <h4>Features</h4>
-            <ul>
-              <li>Tap any city to see biblical events & scripture</li>
-              <li>Use journey chips to filter by trip</li>
-              <li>Toggle biblical/modern city names</li>
-              <li>Filter by scripture chapter or verse</li>
-              <li>See how each city connects to the biblical narrative</li>
-            </ul>
+
+          <div class="donate-divider"></div>
+
+          <div class="donate-email">
+            <p id="donateEmailLabel" class="donate-email-label">Feedback or questions?</p>
+            <a href="mailto:garridolecca.rivera@gmail.com" class="donate-email-link">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+              garridolecca.rivera@gmail.com
+            </a>
           </div>
-          <p class="info-verse">"How beautiful are the feet of those who bring good news!" &mdash; Romans 10:15</p>
         </div>
       </calcite-modal>
 
@@ -167,14 +164,7 @@
               <h2 id="sheetBiblicalName" class="sheet-biblical-name"></h2>
               <p id="sheetModernName" class="sheet-modern-name"></p>
             </div>
-            <calcite-button
-              id="closeSheet"
-              appearance="transparent"
-              icon-start="x"
-              kind="neutral"
-              scale="s"
-              round
-            ></calcite-button>
+            <calcite-button id="closeSheet" appearance="transparent" icon-start="x" kind="neutral" scale="s" round></calcite-button>
           </div>
           <div id="sheetEvents" class="sheet-events"></div>
         </div>
