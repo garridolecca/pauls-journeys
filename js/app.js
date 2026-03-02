@@ -63,8 +63,9 @@ function fillDonateModal() {
   document.getElementById("donateModalTitle").textContent = t("donateTitle");
   document.getElementById("donateText").textContent = t("donateText");
   document.getElementById("donateBtnLabel").textContent = t("donateButton") + " via Venmo";
+  document.getElementById("donatePaypalLabel").textContent = t("donateButton") + " via PayPal";
   document.getElementById("donateQrLabel").textContent =
-    lang === "es" ? "O escanea este código QR:" : "Or scan this QR code:";
+    lang === "es" ? "O escanea este código QR (Venmo):" : "Or scan this QR code (Venmo):";
   document.getElementById("donateEmailLabel").textContent = t("donateEmailLabel");
 }
 

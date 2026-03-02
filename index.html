@@ -143,13 +143,19 @@
           <div class="donate-content">
             <p id="donateText" class="donate-text"></p>
 
-            <a href="https://venmo.com/u/garridolecca" target="_blank" rel="noopener" class="donate-venmo-btn" id="donateVenmoBtn">
-              <svg class="venmo-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.41 1.87c.75 1.22 1.09 2.48 1.09 4.07 0 5.07-4.33 11.65-7.84 16.27H6.59L3.5 2.23l6.76-.62 1.73 13.86C13.87 12.42 16 7.6 16 4.79c0-1.52-.26-2.56-.67-3.4l5.08.48z"/></svg>
-              <span id="donateBtnLabel">Donate via Venmo</span>
-            </a>
+            <div class="donate-buttons">
+              <a href="https://venmo.com/u/garridolecca" target="_blank" rel="noopener" class="donate-venmo-btn" id="donateVenmoBtn">
+                <svg class="venmo-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.41 1.87c.75 1.22 1.09 2.48 1.09 4.07 0 5.07-4.33 11.65-7.84 16.27H6.59L3.5 2.23l6.76-.62 1.73 13.86C13.87 12.42 16 7.6 16 4.79c0-1.52-.26-2.56-.67-3.4l5.08.48z"/></svg>
+                <span id="donateBtnLabel">Donate via Venmo</span>
+              </a>
+              <a href="https://paypal.me/cgarridolecca" target="_blank" rel="noopener" class="donate-paypal-btn" id="donatePaypalBtn">
+                <svg class="paypal-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.5 6.2c.5-2.8-.0-4.7-1.7-6.4C16.1-1.8 13.3-.8 10.5-.8H4.2c-.5 0-.9.4-1 .9L.8 18c-.1.4.2.7.6.7h4.3l1.1-6.8-.0.2c.1-.5.5-.9 1-.9h2.1c4.1 0 7.3-1.7 8.2-6.5.0-.1.1-.3.1-.4z" transform="translate(1.5 3)"/></svg>
+                <span id="donatePaypalLabel">Donate via PayPal</span>
+              </a>
+            </div>
 
             <div class="donate-qr-section">
-              <p class="donate-qr-label" id="donateQrLabel">Or scan this QR code:</p>
+              <p class="donate-qr-label" id="donateQrLabel">Or scan this QR code (Venmo):</p>
               <img class="donate-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://venmo.com/u/garridolecca&bgcolor=2d2329&color=C9A84C" alt="Venmo QR Code" width="150" height="150" />
             </div>
 

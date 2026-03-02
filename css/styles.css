@@ -980,19 +980,33 @@ calcite-shell {
   margin-bottom: 1.5rem;
 }
 
-.donate-venmo-btn {
+.donate-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.donate-venmo-btn,
+.donate-paypal-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   padding: 12px 28px;
   border-radius: 10px;
-  background: #008CFF;
   color: white;
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.25s ease;
+  width: 100%;
+  max-width: 280px;
+}
+
+.donate-venmo-btn {
+  background: #008CFF;
 }
 
 .donate-venmo-btn:hover {
@@ -1001,7 +1015,18 @@ calcite-shell {
   box-shadow: 0 4px 16px rgba(0, 140, 255, 0.3);
 }
 
-.venmo-icon {
+.donate-paypal-btn {
+  background: #0070BA;
+}
+
+.donate-paypal-btn:hover {
+  background: #005a96;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 112, 186, 0.3);
+}
+
+.venmo-icon,
+.paypal-icon {
   flex-shrink: 0;
 }
 
