@@ -545,8 +545,93 @@ calcite-shell {
   transform: translateX(-50%) translateY(-100px);
 }
 
+/* ---------- Custom Modal Overlay ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  padding: 24px;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.modal-box {
+  background: var(--panel-bg);
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  width: 100%;
+}
+
+.modal-box-sm {
+  max-width: 400px;
+}
+
+.modal-box-md {
+  max-width: 500px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 0;
+  background: var(--panel-bg);
+  border-radius: 16px 16px 0 0;
+  z-index: 1;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin: 0;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 22px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.donate-content {
+  padding: 20px 24px 24px;
+}
+
 /* ---------- Info Modal ---------- */
 .info-content {
+  padding: 20px 24px 24px;
   line-height: 1.7;
   color: var(--text-secondary);
   font-size: 0.9rem;
@@ -839,7 +924,6 @@ calcite-shell {
 /* ---------- Donate Modal ---------- */
 .donate-content {
   text-align: center;
-  padding: 0.5rem 0;
 }
 
 .donate-text {

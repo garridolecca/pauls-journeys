@@ -2,9 +2,9 @@
  * Paul's Missionary Journeys — Main Application
  * ArcGIS Maps SDK for JavaScript 5.0
  *
- * CONFIGURATION: To use Esri's premium basemaps, set your API key below.
- * Get a free key at https://developers.arcgis.com/
- * Without a key, the app uses CartoDB dark tiles (no key required).
+ * CONFIGURATION: To use Esri's premium basemaps (e.g. Human Geography),
+ * get a free API key at https://developers.arcgis.com/ and paste it below.
+ * Without a key, the app uses CartoDB Positron tiles (light gray, no key required).
  */
 const ARCGIS_API_KEY = ""; // Paste your key here
 
@@ -33,6 +33,79 @@ import {
 const langSelector = document.getElementById("langSelector");
 const splash = document.getElementById("splash");
 const loaderBar = document.querySelector(".splash-loader-bar");
+
+// ============================================================
+// Custom Modal Helpers (replace Calcite modals)
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add("hidden");
+}
+
+// Close modals on backdrop click
+document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.classList.add("hidden");
+  });
+});
+
+// Close buttons
+document.getElementById("closeInfo").addEventListener("click", () => closeModal("infoOverlay"));
+document.getElementById("closeDonate").addEventListener("click", () => closeModal("donateOverlay"));
+
+// ============================================================
+// Donate & Info — always available (no ArcGIS dependency)
+// ============================================================
+function fillDonateModal() {
+  document.getElementById("donateModalTitle").textContent = t("donateTitle");
+  document.getElementById("donateText").textContent = t("donateText");
+  document.getElementById("donateBtnLabel").textContent = t("donateButton") + " via Venmo";
+  document.getElementById("donateQrLabel").textContent =
+    lang === "es" ? "O escanea este código QR:" : "Or scan this QR code:";
+  document.getElementById("donateEmailLabel").textContent = t("donateEmailLabel");
+}
+
+function fillInfoModal() {
+  document.getElementById("infoModalTitle").textContent = t("infoTitle");
+  const content = document.getElementById("infoModalContent");
+  const legendItems = journeys
+    .map(
+      (j) =>
+        `<div class="legend-item"><span class="legend-line" style="background:${j.hexColor}"></span>${journeyText(j.id, "name")} (${journeyText(j.id, "dateRange")})</div>`
+    )
+    .join("");
+  content.innerHTML = `
+    <p>${journeyText(1, "description")}</p>
+    <div class="info-legend">
+      <h4>${t("infoLegendTitle")}</h4>
+      ${legendItems}
+    </div>
+    <div class="info-features">
+      <h4>${t("infoFeaturesTitle")}</h4>
+      <ul>
+        <li>${t("infoFeature1")}</li>
+        <li>${t("infoFeature2")}</li>
+        <li>${t("infoFeature3")}</li>
+        <li>${t("infoFeature4")}</li>
+        <li>${t("infoFeature5")}</li>
+      </ul>
+    </div>
+    <div class="info-verse">${t("infoVerse")}</div>
+  `;
+}
+
+document.getElementById("btnDonate").addEventListener("click", () => {
+  fillDonateModal();
+  openModal("donateOverlay");
+});
+
+document.getElementById("btnInfo").addEventListener("click", () => {
+  fillInfoModal();
+  openModal("infoOverlay");
+});
 
 // ============================================================
 // Language Selector Flow (initial launch)
@@ -159,13 +232,13 @@ async function initMap() {
 
   if (ARCGIS_API_KEY) {
     esriConfig.apiKey = ARCGIS_API_KEY;
-    mapBasemap = "arcgis/charted-territory";
+    mapBasemap = "arcgis/human-geography";
   } else {
-    // CartoDB Dark Matter — dark tiles with Latin-script labels, no API key needed
+    // CartoDB Positron — light gray tiles with Latin-script labels, no API key needed
     const cartoLayer = new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}@2x.png",
+      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}@2x.png",
       subDomains: ["a", "b", "c", "d"],
-      copyright: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      copyright: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     });
     mapBasemap = new Basemap({ baseLayers: [cartoLayer] });
   }
@@ -268,7 +341,6 @@ async function initMap() {
       const journey = journeys.find((j) => j.id === route.journey);
       if (!journey) return;
 
-      // When a specific journey is selected, skip all other journeys
       if (activeJourney !== "all" && activeJourney !== route.journey) return;
 
       if (route.outbound && route.outbound.length > 1) {
@@ -315,7 +387,6 @@ async function initMap() {
     const filteredCities = getFilteredCities();
 
     cities.forEach((city) => {
-      // When a journey is selected, skip cities not on that journey
       if (activeJourney !== "all" && !city.journeys.includes(activeJourney)) return;
 
       const isVisible = filteredCities.has(city.id);
@@ -334,7 +405,7 @@ async function initMap() {
             symbol: new SimpleMarkerSymbol({
               style: "circle",
               size: size + 12,
-              color: [markerColor[0], markerColor[1], markerColor[2], 35],
+              color: [markerColor[0], markerColor[1], markerColor[2], 40],
               outline: { color: [0, 0, 0, 0], width: 0 },
             }),
             attributes: { cityId: city.id, type: "glow" },
@@ -351,7 +422,7 @@ async function initMap() {
             size,
             color: [...markerColor, opacity * 255],
             outline: {
-              color: [255, 255, 255, opacity * 180],
+              color: [60, 40, 50, opacity * 200],
               width: getCityOutlineWidth(city.significance),
             },
           }),
@@ -385,7 +456,7 @@ async function initMap() {
         );
       }
 
-      // City name label
+      // City name label — dark text with light halo for light basemap
       if (isVisible && (city.significance !== "minor" || view.zoom > 6)) {
         const labelText = showBiblicalNames
           ? (cityText(city.id, "biblicalName") || city.biblicalName)
@@ -395,8 +466,8 @@ async function initMap() {
             geometry: point,
             symbol: new TextSymbol({
               text: labelText,
-              color: [245, 230, 200, opacity * 255],
-              haloColor: [0, 0, 0, 200],
+              color: [40, 25, 35, opacity * 255],
+              haloColor: [255, 255, 255, 220],
               haloSize: 2,
               font: {
                 size: city.significance === "major" ? 11 : 9,
@@ -534,7 +605,6 @@ async function initMap() {
       }
 
       const chapterDiv = document.createElement("div");
-
       const evtCount = entries.length;
       const evtWord = evtCount === 1 ? t("eventSingular") : t("eventPlural");
 
@@ -637,60 +707,6 @@ async function initMap() {
       openBottomSheet(selectedCity);
     }
   });
-
-  // ============================================================
-  // UI: Info Modal
-  // ============================================================
-  document.getElementById("btnInfo").addEventListener("click", () => {
-    fillInfoModal();
-    document.getElementById("infoModal").open = true;
-  });
-
-  function fillInfoModal() {
-    document.getElementById("infoModalTitle").textContent = t("infoTitle");
-    const content = document.getElementById("infoModalContent");
-    const legendItems = journeys
-      .map(
-        (j) =>
-          `<div class="legend-item"><span class="legend-line" style="background:${j.hexColor}"></span>${journeyText(j.id, "name")} (${journeyText(j.id, "dateRange")})</div>`
-      )
-      .join("");
-    content.innerHTML = `
-      <p>${journeyText(1, "description")}</p>
-      <div class="info-legend">
-        <h4>${t("infoLegendTitle")}</h4>
-        ${legendItems}
-      </div>
-      <div class="info-features">
-        <h4>${t("infoFeaturesTitle")}</h4>
-        <ul>
-          <li>${t("infoFeature1")}</li>
-          <li>${t("infoFeature2")}</li>
-          <li>${t("infoFeature3")}</li>
-          <li>${t("infoFeature4")}</li>
-          <li>${t("infoFeature5")}</li>
-        </ul>
-      </div>
-      <div class="info-verse">${t("infoVerse")}</div>
-    `;
-  }
-
-  // ============================================================
-  // UI: Donate Modal
-  // ============================================================
-  document.getElementById("btnDonate").addEventListener("click", () => {
-    fillDonateModal();
-    document.getElementById("donateModal").open = true;
-  });
-
-  function fillDonateModal() {
-    document.getElementById("donateModalTitle").textContent = t("donateTitle");
-    document.getElementById("donateText").textContent = t("donateText");
-    document.getElementById("donateBtnLabel").textContent = t("donateButton") + " via Venmo";
-    document.getElementById("donateQrLabel").textContent =
-      lang === "es" ? "O escanea este código QR:" : "Or scan this QR code:";
-    document.getElementById("donateEmailLabel").textContent = t("donateEmailLabel");
-  }
 
   // ============================================================
   // UI: Bottom Sheet
@@ -797,7 +813,7 @@ async function initMap() {
         symbol: new SimpleMarkerSymbol({
           style: "circle",
           size: getCitySize(city.significance) + 12,
-          color: [201, 168, 76, 30],
+          color: [201, 168, 76, 35],
           outline: { color: [201, 168, 76, 200], width: 2 },
         }),
         attributes: { cityId: city.id, type: "highlight" },
