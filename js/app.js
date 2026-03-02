@@ -234,9 +234,9 @@ async function initMap() {
     esriConfig.apiKey = ARCGIS_API_KEY;
     mapBasemap = "arcgis/human-geography";
   } else {
-    // CartoDB Positron NO LABELS — clean light gray tiles, we draw our own translated labels
+    // CartoDB Positron WITH all labels — full detail at every zoom level
     const cartoLayer = new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_nolabels/{level}/{col}/{row}@2x.png",
+      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}@2x.png",
       subDomains: ["a", "b", "c", "d"],
       copyright: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     });
@@ -303,13 +303,14 @@ async function initMap() {
           geometry: new Point({ longitude: geo.lng, latitude: geo.lat }),
           symbol: new TextSymbol({
             text,
-            color: [...geo.color, 160],
-            haloColor: [255, 255, 255, 100],
-            haloSize: 1,
+            color: [...geo.color, 190],
+            // Large opaque halo to mask basemap labels underneath
+            haloColor: [240, 237, 232, 255],
+            haloSize: 3,
             font: {
               size: geo.size,
               family: "Avenir Next LT Pro",
-              weight: geo.italic ? "normal" : "bold",
+              weight: "bold",
               style: geo.italic ? "italic" : "normal",
             },
             horizontalAlignment: "center",
