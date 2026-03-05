@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Nike World Headquarters Campus - Indoor Mapping powered by ArcGIS Indoors" />
+    <title>Nike Campus Indoors | ArcGIS Indoors</title>
+
+    <!-- ArcGIS Maps SDK -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.31/"></script>
+
+    <!-- Calcite Design System -->
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.13.2/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.13.2/calcite.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!-- ===== SPLASH SCREEN ===== -->
+    <div id="splash" class="splash">
+      <div class="splash-content">
+        <div class="splash-logo">
+          <svg viewBox="0 0 100 36" class="nike-swoosh" fill="currentColor">
+            <path d="M21 2L1 30.2c-.3.5.1 1.1.7 1.1h5.2c.3 0 .6-.1.8-.4L27.2 5.8c.5-.7 1.3-1.1 2.1-1.1H95c1.3 0 2.1-1.5 1.3-2.6L94.9.4c-.3-.3-.7-.4-1.1-.4H23.1c-.8 0-1.6.4-2.1 1z"/>
+          </svg>
+        </div>
+        <h1 class="splash-title">Nike World Headquarters</h1>
+        <p class="splash-subtitle">Indoor Campus Experience</p>
+        <p class="splash-powered">Powered by ArcGIS Indoors</p>
+        <div class="splash-loader">
+          <div class="splash-loader-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MAIN APPLICATION ===== -->
+    <calcite-shell>
+      <!-- Header -->
+      <calcite-navigation slot="header">
+        <calcite-navigation-logo
+          slot="logo"
+          heading="Nike Campus Indoors"
+          description="World Headquarters - Beaverton, OR"
+          thumbnail="assets/nike-logo.svg"
+        ></calcite-navigation-logo>
+
+        <div slot="content-end" class="header-actions">
+          <calcite-action id="btnSearch" text="Search" icon="search" scale="m"></calcite-action>
+          <calcite-action id="btnRoute" text="Wayfinding" icon="directed-walk" scale="m"></calcite-action>
+          <calcite-action id="btnBooking" text="Book Space" icon="calendar" scale="m"></calcite-action>
+          <calcite-action id="btnAnalytics" text="Analytics" icon="graph-bar" scale="m"></calcite-action>
+        </div>
+      </calcite-navigation>
+
+      <!-- Left Panel -->
+      <calcite-shell-panel slot="panel-start" position="start" id="leftPanel">
+        <calcite-panel heading="Campus Explorer" id="mainPanel">
+          <!-- Floor Picker -->
+          <div class="floor-picker-container">
+            <h4 class="section-title">Select Building & Floor</h4>
+            <calcite-label>
+              Building
+              <calcite-select id="buildingSelect">
+                <calcite-option value="tiger-woods" selected>Tiger Woods Center</calcite-option>
+                <calcite-option value="lebron-james">LeBron James Building</calcite-option>
+                <calcite-option value="serena-williams">Serena Williams Building</calcite-option>
+                <calcite-option value="mia-hamm">Mia Hamm Building</calcite-option>
+                <calcite-option value="sebastian-coe">Sebastian Coe Building</calcite-option>
+                <calcite-option value="joan-benoit">Joan Benoit Building</calcite-option>
+                <calcite-option value="jerry-rice">Jerry Rice Center</calcite-option>
+                <calcite-option value="nolan-ryan">Nolan Ryan Building</calcite-option>
+                <calcite-option value="bo-jackson">Bo Jackson Fitness Center</calcite-option>
+                <calcite-option value="lance-armstrong">Lance Armstrong Building</calcite-option>
+              </calcite-select>
+            </calcite-label>
+            <calcite-label>
+              Floor Level
+              <calcite-slider id="floorSlider" min="0" max="4" value="1" step="1" snap label-handles ticks="1" min-label="Ground" max-label="4F"></calcite-slider>
+            </calcite-label>
+          </div>
+
+          <!-- Space Categories -->
+          <div class="category-section">
+            <h4 class="section-title">Space Categories</h4>
+            <div class="category-grid">
+              <button class="category-card active" data-category="all">
+                <calcite-icon icon="viewpoint-center" scale="l"></calcite-icon>
+                <span>All Spaces</span>
+              </button>
+              <button class="category-card" data-category="office">
+                <calcite-icon icon="office-desk-phone" scale="l"></calcite-icon>
+                <span>Offices</span>
+              </button>
+              <button class="category-card" data-category="conference">
+                <calcite-icon icon="collaboration" scale="l"></calcite-icon>
+                <span>Conference</span>
+              </button>
+              <button class="category-card" data-category="fitness">
+                <calcite-icon icon="walking" scale="l"></calcite-icon>
+                <span>Fitness</span>
+              </button>
+              <button class="category-card" data-category="cafe">
+                <calcite-icon icon="urban-model" scale="l"></calcite-icon>
+                <span>Cafeteria</span>
+              </button>
+              <button class="category-card" data-category="lab">
+                <calcite-icon icon="condition" scale="l"></calcite-icon>
+                <span>Design Labs</span>
+              </button>
+              <button class="category-card" data-category="retail">
+                <calcite-icon icon="shopping-cart" scale="l"></calcite-icon>
+                <span>Nike Store</span>
+              </button>
+              <button class="category-card" data-category="parking">
+                <calcite-icon icon="car" scale="l"></calcite-icon>
+                <span>Parking</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Space List -->
+          <div class="space-list-section">
+            <h4 class="section-title">Available Spaces <span id="spaceCount" class="badge">0</span></h4>
+            <div id="spaceList" class="space-list"></div>
+          </div>
+        </calcite-panel>
+
+        <!-- Search Panel -->
+        <calcite-panel heading="Search Campus" id="searchPanel" class="hidden-panel">
+          <calcite-action slot="header-actions-end" id="closeSearch" icon="x" text="Close"></calcite-action>
+          <div class="search-container">
+            <calcite-input-text id="searchInput" placeholder="Search people, rooms, amenities..." icon="search" clearable></calcite-input-text>
+            <div class="search-filters">
+              <calcite-chip-group selection-mode="single">
+                <calcite-chip value="all" selected>All</calcite-chip>
+                <calcite-chip value="people">People</calcite-chip>
+                <calcite-chip value="rooms">Rooms</calcite-chip>
+                <calcite-chip value="amenities">Amenities</calcite-chip>
+              </calcite-chip-group>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+          </div>
+        </calcite-panel>
+
+        <!-- Routing Panel -->
+        <calcite-panel heading="Indoor Wayfinding" id="routePanel" class="hidden-panel">
+          <calcite-action slot="header-actions-end" id="closeRoute" icon="x" text="Close"></calcite-action>
+          <div class="route-container">
+            <calcite-label>
+              From
+              <calcite-input-text id="routeFrom" placeholder="Your location or choose on map" icon="pin" clearable></calcite-input-text>
+            </calcite-label>
+            <calcite-button id="swapRoute" appearance="transparent" icon-start="arrow-up-down" kind="neutral" class="swap-btn"></calcite-button>
+            <calcite-label>
+              To
+              <calcite-input-text id="routeTo" placeholder="Destination" icon="pin-tear" clearable></calcite-input-text>
+            </calcite-label>
+            <div class="route-options">
+              <calcite-label layout="inline">
+                <calcite-checkbox id="accessibleRoute"></calcite-checkbox>
+                Accessible Route
+              </calcite-label>
+              <calcite-segmented-control id="routeMode" width="full">
+                <calcite-segmented-control-item value="walk" checked icon-start="walking">Walk</calcite-segmented-control-item>
+                <calcite-segmented-control-item value="elevator" icon-start="elevation-profile">Elevator</calcite-segmented-control-item>
+              </calcite-segmented-control>
+            </div>
+            <calcite-button id="calculateRoute" width="full" icon-start="directed-walk" appearance="solid">Get Directions</calcite-button>
+            <div id="routeResults" class="route-results hidden">
+              <div class="route-summary">
+                <div class="route-stat">
+                  <calcite-icon icon="clock" scale="s"></calcite-icon>
+                  <span id="routeTime">--</span>
+                </div>
+                <div class="route-stat">
+                  <calcite-icon icon="measure" scale="s"></calcite-icon>
+                  <span id="routeDistance">--</span>
+                </div>
+                <div class="route-stat">
+                  <calcite-icon icon="layer-polygon" scale="s"></calcite-icon>
+                  <span id="routeFloors">--</span>
+                </div>
+              </div>
+              <div id="routeDirections" class="route-directions"></div>
+            </div>
+          </div>
+        </calcite-panel>
+
+        <!-- Booking Panel -->
+        <calcite-panel heading="Space Booking" id="bookingPanel" class="hidden-panel">
+          <calcite-action slot="header-actions-end" id="closeBooking" icon="x" text="Close"></calcite-action>
+          <div class="booking-container">
+            <calcite-notice open icon="information" kind="brand" scale="s">
+              <span slot="message">Select a conference room or workspace to check availability and book.</span>
+            </calcite-notice>
+            <calcite-label>
+              Date
+              <calcite-input-date-picker id="bookingDate" layout="horizontal"></calcite-input-date-picker>
+            </calcite-label>
+            <calcite-label>
+              Time
+              <calcite-input-time-picker id="bookingTime" step="1800"></calcite-input-time-picker>
+            </calcite-label>
+            <calcite-label>
+              Duration
+              <calcite-select id="bookingDuration">
+                <calcite-option value="30">30 minutes</calcite-option>
+                <calcite-option value="60" selected>1 hour</calcite-option>
+                <calcite-option value="90">1.5 hours</calcite-option>
+                <calcite-option value="120">2 hours</calcite-option>
+              </calcite-select>
+            </calcite-label>
+            <calcite-label>
+              Attendees
+              <calcite-input-number id="bookingAttendees" min="1" max="50" value="4"></calcite-input-number>
+            </calcite-label>
+            <calcite-button id="findAvailable" width="full" icon-start="calendar" appearance="solid">Find Available Spaces</calcite-button>
+            <div id="availableSpaces" class="available-spaces"></div>
+          </div>
+        </calcite-panel>
+
+        <!-- Analytics Panel -->
+        <calcite-panel heading="Space Analytics" id="analyticsPanel" class="hidden-panel">
+          <calcite-action slot="header-actions-end" id="closeAnalytics" icon="x" text="Close"></calcite-action>
+          <div class="analytics-container">
+            <!-- Occupancy Overview -->
+            <div class="analytics-card">
+              <h5>Campus Occupancy</h5>
+              <div class="occupancy-ring">
+                <svg viewBox="0 0 120 120" class="ring-svg">
+                  <circle cx="60" cy="60" r="50" class="ring-bg" />
+                  <circle cx="60" cy="60" r="50" class="ring-fill" id="occupancyRing" />
+                </svg>
+                <div class="ring-label">
+                  <span id="occupancyPercent" class="ring-value">72%</span>
+                  <span class="ring-sub">Occupied</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Building Stats -->
+            <div class="analytics-card">
+              <h5>Building Utilization</h5>
+              <div id="buildingBars" class="bar-chart"></div>
+            </div>
+
+            <!-- Space Type Breakdown -->
+            <div class="analytics-card">
+              <h5>Space Type Breakdown</h5>
+              <div id="spaceBreakdown" class="breakdown-list"></div>
+            </div>
+
+            <!-- Live Sensors -->
+            <div class="analytics-card">
+              <h5>Environmental Sensors</h5>
+              <div class="sensor-grid">
+                <div class="sensor-item">
+                  <calcite-icon icon="temperature" scale="l"></calcite-icon>
+                  <span class="sensor-value" id="sensorTemp">72°F</span>
+                  <span class="sensor-label">Temperature</span>
+                </div>
+                <div class="sensor-item">
+                  <calcite-icon icon="humidity" scale="l"></calcite-icon>
+                  <span class="sensor-value" id="sensorHumidity">45%</span>
+                  <span class="sensor-label">Humidity</span>
+                </div>
+                <div class="sensor-item">
+                  <calcite-icon icon="brightness" scale="l"></calcite-icon>
+                  <span class="sensor-value" id="sensorCO2">412ppm</span>
+                  <span class="sensor-label">CO₂ Level</span>
+                </div>
+                <div class="sensor-item">
+                  <calcite-icon icon="sound" scale="l"></calcite-icon>
+                  <span class="sensor-value" id="sensorNoise">38dB</span>
+                  <span class="sensor-label">Noise Level</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </calcite-panel>
+      </calcite-shell-panel>
+
+      <!-- Map View -->
+      <div id="viewDiv"></div>
+
+      <!-- Floor Picker Widget (right side of map) -->
+      <div id="floorPickerWidget" class="floor-picker-widget">
+        <button class="floor-btn" data-floor="4">4</button>
+        <button class="floor-btn" data-floor="3">3</button>
+        <button class="floor-btn" data-floor="2">2</button>
+        <button class="floor-btn active" data-floor="1">1</button>
+        <button class="floor-btn" data-floor="0">G</button>
+      </div>
+
+      <!-- Space Info Popup -->
+      <div id="spacePopup" class="space-popup hidden">
+        <div class="popup-header">
+          <h3 id="popupTitle">Room Name</h3>
+          <button id="closePopup" class="popup-close">&times;</button>
+        </div>
+        <div id="popupContent" class="popup-content"></div>
+        <div class="popup-actions">
+          <calcite-button id="popupRoute" appearance="outline" icon-start="directed-walk" scale="s">Route Here</calcite-button>
+          <calcite-button id="popupBook" appearance="solid" icon-start="calendar" scale="s">Book Now</calcite-button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div id="legendPanel" class="legend-panel">
+        <button id="toggleLegend" class="legend-toggle">
+          <calcite-icon icon="legend" scale="s"></calcite-icon>
+        </button>
+        <div id="legendContent" class="legend-content hidden">
+          <h4>Space Types</h4>
+          <div class="legend-items">
+            <div class="legend-item"><span class="legend-swatch" style="background:#4A90D9"></span>Office</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#7B61FF"></span>Conference</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#27AE60"></span>Fitness</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#F39C12"></span>Cafeteria</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#E74C3C"></span>Design Lab</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#1ABC9C"></span>Retail</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#95A5A6"></span>Parking</div>
+            <div class="legend-item"><span class="legend-swatch" style="background:#E8E8E8"></span>Common Area</div>
+          </div>
+        </div>
+      </div>
+    </calcite-shell>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
