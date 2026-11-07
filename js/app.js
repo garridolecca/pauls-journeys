@@ -235,13 +235,17 @@ async function initMap() {
     esriConfig.apiKey = ARCGIS_API_KEY;
     mapBasemap = "arcgis/human-geography";
   } else {
-    // CartoDB Positron WITH all labels — full detail at every zoom level
-    const cartoLayer = new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/light_all/{level}/{col}/{row}@2x.png",
-      subDomains: ["a", "b", "c", "d"],
-      copyright: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    // Esri World Light Gray Canvas tiles: public, no API key required
+    // (CARTO's basemaps.cartocdn.com tiles now require an API key).
+    const esriTiles = "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+    const grayBase = new WebTileLayer({
+      urlTemplate: esriTiles + "World_Light_Gray_Base/MapServer/tile/{level}/{row}/{col}",
+      copyright: "Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
     });
-    mapBasemap = new Basemap({ baseLayers: [cartoLayer] });
+    const grayLabels = new WebTileLayer({
+      urlTemplate: esriTiles + "World_Light_Gray_Reference/MapServer/tile/{level}/{row}/{col}",
+    });
+    mapBasemap = new Basemap({ baseLayers: [grayBase], referenceLayers: [grayLabels] });
   }
 
   // ============================================================
